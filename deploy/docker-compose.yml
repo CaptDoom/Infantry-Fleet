@@ -1,0 +1,105 @@
+# ============================================================================
+# M-FTAMS — Central Server Stack
+# Includes PostgreSQL 15 + TimescaleDB, Redis 7, Backend, Dashboard, Nginx TLS 1.3
+# ============================================================================
+
+version: '3.8'
+
+services:
+  postgres:
+    image: timescale/timescaledb:latest-pg15
+    container_name: mftams-postgres
+    restart: unless-stopped
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+    environment:
+      POSTGRES_DB: mftams
+      POSTGRES_USER: mftams_app
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_password
+    secrets:
+      - pg_password
+    networks:
+      - mftams-central-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mftams_app -d mftams"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: mftams-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    networks:
+      - mftams-central-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: mftams-central-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      PORT: "8080"
+      DATABASE_URL: postgres://mftams_app:mftams_secure_pg_password_2026!@postgres:5432/mftams
+      REDIS_URL: redis://redis:6379
+      HMAC_SIGNING_KEY_FILE: /run/secrets/hmac_key
+      JWT_SECRET: mftams_jwt_production_secret_key_cantonment_2026
+      NODE_ENV: production
+    secrets:
+      - hmac_key
+    networks:
+      - mftams-central-net
+
+  dashboard:
+    build:
+      context: ../frontend-dashboard
+      dockerfile: Dockerfile
+    container_name: mftams-dashboard
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - mftams-central-net
+
+  nginx:
+    image: nginx:alpine
+    container_name: mftams-nginx-proxy
+    restart: unless-stopped
+    depends_on:
+      - backend
+      - dashboard
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - mftams-central-net
+
+secrets:
+  pg_password:
+    file: ./secrets/pg_password.txt
+  hmac_key:
+    file: ./secrets/hmac_key.txt
+
+volumes:
+  pg-data:
+  redis-data:
+
+networks:
+  mftams-central-net:
+    driver: bridge

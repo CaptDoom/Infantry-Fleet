@@ -1,0 +1,24 @@
+{
+  "name": "m-ftams-edge-simulator",
+  "version": "1.0.0",
+  "description": "M-FTAMS Multi-Terminal Edge Simulator & Network Fault Injection Harness",
+  "main": "dist/simulator.js",
+  "scripts": {
+    "build": "tsc",
+    "simulate": "ts-node src/simulator.ts",
+    "test": "node --localstorage-file=node_modules/.tmp-storage ./node_modules/jest/bin/jest.js --runInBand --forceExit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.14.9",
+    "@types/uuid": "^9.0.8",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.5.2"
+  }
+}

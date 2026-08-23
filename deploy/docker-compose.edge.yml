@@ -1,0 +1,56 @@
+# ============================================================================
+# M-FTAMS — Edge Terminal Stack
+# Per-gate deployment with embedded SQLite durability and Kiosk UI
+# ============================================================================
+
+version: '3.8'
+
+services:
+  edge-backend:
+    build:
+      context: ../edge-backend
+      dockerfile: Dockerfile
+    container_name: mftams-edge-backend-gate04
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: "3001"
+      CENTRAL_URL: "http://host.docker.internal:8080" # Or https://mftams-central.cantonment.mil:8080 in production
+      SYNC_INTERVAL: "300"
+      EDGE_ID: "GATE-04"
+      SECRET_KEY_FILE: /run/secrets/edge_secret
+      DB_PATH: /app/data/edge_gate04.sqlite
+      NODE_ENV: production
+    volumes:
+      - edge-data:/app/data # Persistent SQLite mount point across restarts
+    secrets:
+      - edge_secret
+    networks:
+      - mftams-edge-net
+
+  edge-kiosk:
+    build:
+      context: ../frontend-kiosk
+      dockerfile: Dockerfile
+    container_name: mftams-edge-kiosk-gate04
+    restart: unless-stopped
+    depends_on:
+      - edge-backend
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_EDGE_API_URL: "http://localhost:3001"
+    networks:
+      - mftams-edge-net
+
+secrets:
+  edge_secret:
+    file: ./secrets/edge_secret_gate04.txt
+
+volumes:
+  edge-data:
+
+networks:
+  mftams-edge-net:
+    driver: bridge
