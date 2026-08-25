@@ -1,0 +1,93 @@
+# ==============================================================================
+# M-FTAMS — Render.com Blueprint Infrastructure as Code (render.yaml)
+# https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Central Backend API (Node.js Web Service)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: m-ftams-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: HMAC_MASTER_KEY
+        generateValue: true
+
+  # ----------------------------------------------------------------------------
+  # 2. Commander & MTO Dashboard (Static Site)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: m-ftams-dashboard
+    runtime: static
+    rootDir: frontend-dashboard
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_API_URL
+        fromService:
+          type: web
+          name: m-ftams-backend
+          property: host
+
+  # ----------------------------------------------------------------------------
+  # 3. Sentry Gate Kiosk (Static Site)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: m-ftams-kiosk
+    runtime: static
+    rootDir: frontend-kiosk
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_EDGE_API_URL
+        value: http://localhost:3001
+
+  # ----------------------------------------------------------------------------
+  # 4. Optional Cloud Edge Backend Node (Demo Gate Access Point)
+  # ----------------------------------------------------------------------------
+  - type: web
+    name: m-ftams-edge-backend
+    runtime: node
+    plan: starter
+    region: oregon
+    rootDir: edge-backend
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: EDGE_ID
+        value: GATE-04
+      - key: CENTRAL_URL
+        fromService:
+          type: web
+          name: m-ftams-backend
+          property: host

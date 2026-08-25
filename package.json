@@ -9,6 +9,15 @@
     "test:edge": "npm --prefix edge-backend test",
     "test:simulator": "npm --prefix edge-simulator test",
     "build": "npm --prefix backend run build && npm --prefix edge-backend run build && npm --prefix frontend-kiosk run build && npm --prefix frontend-dashboard run build",
+    "build:backend": "npm --prefix backend run build",
+    "build:edge": "npm --prefix edge-backend run build",
+    "build:dashboard": "npm --prefix frontend-dashboard run build",
+    "build:kiosk": "npm --prefix frontend-kiosk run build",
+    "start": "npm --prefix backend start",
+    "start:backend": "npm --prefix backend start",
+    "start:edge": "npm --prefix edge-backend start",
+    "start:dashboard": "npm --prefix frontend-dashboard run preview",
+    "start:kiosk": "npm --prefix frontend-kiosk run preview",
     "lint": "node scripts/verify-isolation.js"
   }
 }

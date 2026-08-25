@@ -2,7 +2,20 @@
 // M-FTAMS Dashboard — Central Server API Client & Role Token Manager
 // ============================================================================
 
-const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://localhost:8080/api/v1';
+function resolveApiBase(): string {
+  const envUrl = (import.meta as any).env?.VITE_API_URL;
+  if (!envUrl) return 'http://localhost:8080/api/v1';
+  let url = String(envUrl).trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  if (!url.endsWith('/api/v1')) {
+    url = url.replace(/\/+$/, '') + '/api/v1';
+  }
+  return url;
+}
+
+const API_BASE = resolveApiBase();
 
 export type UserRole = 'ADMIN' | 'MTO' | 'COMMANDER' | 'SENTRY' | 'DRIVER';
 

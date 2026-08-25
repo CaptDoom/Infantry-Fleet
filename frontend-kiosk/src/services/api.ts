@@ -3,7 +3,17 @@
 // Talks ONLY to co-located edge backend over loopback
 // ============================================================================
 
-const EDGE_API_URL = (import.meta as any).env?.VITE_EDGE_API_URL || 'http://localhost:3001';
+function resolveEdgeApiUrl(): string {
+  const envUrl = (import.meta as any).env?.VITE_EDGE_API_URL;
+  if (!envUrl) return 'http://localhost:3001';
+  let url = String(envUrl).trim();
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = `https://${url}`;
+  }
+  return url.replace(/\/+$/, '');
+}
+
+const EDGE_API_URL = resolveEdgeApiUrl();
 
 export interface GateScanResponse {
   token_id: string;
