@@ -4,7 +4,15 @@
 
 function resolveApiBase(): string {
   const envUrl = (import.meta as any).env?.VITE_API_URL;
-  if (!envUrl) return 'http://localhost:8080/api/v1';
+  if (!envUrl) {
+    if (typeof window !== 'undefined' && window.location && window.location.origin) {
+      // If deployed on standard cloud ports (80/443 or Render domain)
+      if (!window.location.port || window.location.port === '80' || window.location.port === '443' || window.location.hostname.includes('.onrender.com')) {
+        return `${window.location.origin}/api/v1`;
+      }
+    }
+    return 'http://localhost:8080/api/v1';
+  }
   let url = String(envUrl).trim();
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     url = `https://${url}`;

@@ -51,3 +51,34 @@ app.use('/api/v1/system', systemRouter);
 // Sync Protocol Routes (/sync)
 app.use('/sync', syncRouter);
 
+// Serve Static Frontend Dashboard if dist exists (Unified Monorepo Deployment)
+import * as path from 'path';
+import * as fs from 'fs';
+
+const staticPath1 = path.resolve(__dirname, '../../frontend-dashboard/dist');
+const staticPath2 = path.resolve(process.cwd(), 'frontend-dashboard/dist');
+const staticPath3 = path.resolve(process.cwd(), '../frontend-dashboard/dist');
+
+const resolvedStaticDir = fs.existsSync(staticPath1)
+  ? staticPath1
+  : fs.existsSync(staticPath2)
+    ? staticPath2
+    : fs.existsSync(staticPath3)
+      ? staticPath3
+      : null;
+
+if (resolvedStaticDir) {
+  app.use(express.static(resolvedStaticDir));
+  app.get('*', (req, res, next) => {
+    if (
+      req.path.startsWith('/api') ||
+      req.path.startsWith('/sync') ||
+      req.path.startsWith('/health') ||
+      req.path.startsWith('/metrics')
+    ) {
+      return next();
+    }
+    res.sendFile(path.join(resolvedStaticDir, 'index.html'));
+  });
+}
+
