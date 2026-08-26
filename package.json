@@ -17,6 +17,8 @@
     "build:dashboard": "npm --prefix frontend-dashboard run build",
     "build:kiosk": "npm --prefix frontend-kiosk run build",
     "start": "npm --prefix backend start",
+    "dev": "npm --prefix backend start",
+    "serve": "npm --prefix backend start",
     "start:backend": "npm --prefix backend start",
     "start:edge": "npm --prefix edge-backend start",
     "start:dashboard": "npm --prefix frontend-dashboard run preview",
